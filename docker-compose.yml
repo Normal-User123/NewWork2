@@ -1,0 +1,91 @@
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--api.dashboard=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=exchange.jiocoin@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./letsencrypt:/letsencrypt"
+    networks:
+      - microservices-network
+
+  gateway:
+    build: ./services/gateway
+    container_name: gateway_service
+    ports:
+      - "8005"
+    env_file:
+      - ./services/gateway/.env
+    depends_on:
+      - auth
+      - user
+      - transaction
+      - referral
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gateway.rule=Host(`api.jiocoin.exchange`) || PathPrefix(`/`)"
+      - "traefik.http.routers.gateway.entrypoints=websecure"
+      - "traefik.http.routers.gateway.tls.certresolver=myresolver"
+      - "traefik.http.services.gateway.loadbalancer.server.port=8005"
+      - "traefik.http.middlewares.cors.headers.accesscontrolallowmethods=*"
+      - "traefik.http.middlewares.cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.middlewares.cors.headers.accesscontrolalloworiginlist=*"
+      - "traefik.http.middlewares.cors.headers.accesscontrolmaxage=100"
+      - "traefik.http.middlewares.cors.headers.addvaryheader=true"
+      - "traefik.http.routers.gateway.middlewares=cors"
+    networks:
+      - microservices-network
+
+  auth:
+    build: ./services/auth
+    container_name: auth_service
+    env_file:
+      - ./services/auth/.env
+    expose:
+      - 8001  # Internal access only
+    networks:
+      - microservices-network
+
+  user:
+    build: ./services/user
+    container_name: user_service
+    env_file:
+      - ./services/user/.env
+    expose:
+      - 8000  # Internal access only
+    networks:
+      - microservices-network
+
+  transaction:
+    build: ./services/transaction
+    container_name: transaction_service
+    env_file:
+      - ./services/transaction/.env
+    expose:
+      - 8003  # Internal access only
+    networks:
+      - microservices-network
+
+  referral:
+    build: ./services/referral
+    container_name: referral_service
+    env_file:
+      - ./services/referral/.env
+    expose:
+      - 8002  # Internal access only
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
