@@ -208,8 +208,10 @@ def updateTransactionStatus(db:Session,transaction_id:str, ammount:float=None,st
     if not transaction:
         raise HTTPException(status_code=404, detail="Transaction not found")
     transaction.status = status
+    transaction.updated_at = datetime.now(timezone.utc)
     if ammount:
         transaction.ammount = ammount
+
     db.commit()
     db.refresh(transaction)
     return transaction
@@ -219,6 +221,7 @@ def updateOrCreateCryptoWallet(userId: int, amount: float, db: Session):
     cryptoWallet = db.query(CryptoWallet).filter(CryptoWallet.user_id == userId).first()
     if cryptoWallet:
         cryptoWallet.balance += amount
+        cryptoWallet.updated_at= datetime.now(timezone.utc)
     else:
         cryptoWallet = CryptoWallet(
             user_id=userId,
@@ -232,6 +235,7 @@ def updateOrCreateInterimWallet(userId: int, amount: float, db: Session):
     interimWallet = db.query(InterimWallet).filter(InterimWallet.user_id == userId).first()
     if interimWallet:
         interimWallet.balance += amount
+        interimWallet.updated_at = datetime.now(timezone.utc)
     else:
         interimWallet = InterimWallet(
             user_id=userId,
@@ -249,6 +253,7 @@ def updateOrCreateAdminWallet(admin_wallet_id: int, amount: float, db: Session):
     if not adminWallet:
         raise HTTPException(400,'AdminWallet not found')
     adminWallet.balance += amount
+    adminWallet.updated_at = datetime.now(timezone.utc)
     return adminWallet
 
 
@@ -261,6 +266,7 @@ def getAdminWallet(db: Session):
         raise HTTPException(status_code=404,content={"error": "No Admin wallet found."})
     # Set the wallet as active
     wallet.status = 1
+    wallet.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(wallet)
 
@@ -279,6 +285,7 @@ def resetAdminWallet(db: Session, wallet_id: str):
 
     # Reset the status of the specific wallet
     wallet.status = 0
+    wallet.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(wallet)
     print(f"Admin wallet {wallet_id} has been reset to inactive")
@@ -380,7 +387,7 @@ def processTransaction(txn_hsh: str, user_id:int, ammount: float,adimn_wallet_id
         try: 
             user = updateTransactionId(user_id,db,txn_hsh)
             # Update or create the user's interim wallet
-            adminWallet = updateOrCreateAdminWallet(adimn_wallet_id, ammount, db)
+            # adminWallet = updateOrCreateAdminWallet(adimn_wallet_id, ammount, db)
             interimWallet = updateOrCreateInterimWallet(user_id, ammount, db)
             updateTransactionStatus(db,transaction_id,ammount,1)
             print("Transactions processed successfully.")
@@ -467,4 +474,5 @@ def call_calculate_and_credit(user_id: int, base_amount: float) -> dict:
 def updateTransactionId(user_id : int, db : Session, transaction_id : str):
     user = getUserById(db, user_id)
     user.transaction_id = transaction_id
+    user.updated_at = datetime.now(timezone.utc)
     return user
