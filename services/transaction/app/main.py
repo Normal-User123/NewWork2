@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 def startSchedulerInBackground():
     schedulerThread = threading.Thread(target=runScheduler, daemon=True)       # Create the thread
     schedulerThread.start()   
-    schedule.every(24).hours.do(updateWallet)    # Schedule the task
+    schedule.every().day.at("00:00").do(updateWallet)    # Schedule the task
     # schedule.every(2).minutes.do(updateReferralWallet) 
 def runScheduler():
     while True:
