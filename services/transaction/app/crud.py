@@ -418,7 +418,7 @@ def processTransaction(txn_hsh: str, user_id:int, ammount: float,adimn_wallet_id
         finally:
             db.commit()
             db.refresh(user)
-            db.refresh(adminWallet)
+            # db.refresh(adminWallet)
             if userEntitlement:
                 db.refresh(userEntitlement)
             db.refresh(interimWallet)
