@@ -223,6 +223,7 @@ def getAllUsers(db: Session = Depends(get_db), fil: UserFilter = None):
             created_at=user.created_at,
             updated_at=user.updated_at,
             wallet_id=user.wallet_id,
+            coin_wallet_id=user.coin_wallet_id,
             is_verified=user.is_verified,
             referral_code=user.referral_code,
             transaction_id=user.transaction_id,
