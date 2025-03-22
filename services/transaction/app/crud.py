@@ -369,6 +369,7 @@ def InterimToCryptoWallet():
 
                 # Refresh DB after each iteration (optional, if required)
                 db.refresh(cryptoWallet)
+                db.commit()
 
             db.commit()  # Commit transaction if all operations succeed
             print("Interim wallets have been successfully transferred to crypto wallets.")
