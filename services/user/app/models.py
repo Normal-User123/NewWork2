@@ -76,7 +76,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String, nullable=False)
     wallet_id: Mapped[str] = mapped_column(String, nullable=True,unique= True)
-    coin_wallet_address: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
+    coin_wallet_id: Mapped[Optional[str]] = mapped_column(String, unique=True, nullable=True)
     full_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
