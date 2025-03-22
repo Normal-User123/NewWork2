@@ -52,6 +52,7 @@ class User(UserBase):
     updated_at: datetime
     entitlements: Optional[List[Entitlement]] = Field(default_factory=list)
     wallet_id: Optional[str] = None
+    coin_wallet_id: Optional[str] = None
     is_verified: Optional[bool] = False
     referral_code: Optional[str] = None
     Interim_balance: Optional[float] = 0.0
