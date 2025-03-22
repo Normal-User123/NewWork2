@@ -29,8 +29,10 @@ def addWithdrawal(user_id: int, amount: float, db: Session,minbalance: int):
     if not user.wallet_id:
         raise HTTPException(status_code=404, detail="user Wallet is not set")
     
-    if user.referral_wallet.balance - amount <minbalance:
+    if user.referral_wallet.balance <= amount or user.referral_wallet.balance <minbalance:
         raise HTTPException(status_code=404, detail="You do not have sufficient balance to withdraw")
+    if amount < 20:
+        raise HTTPException(status_code=404, detail="ammount should be greater than or equal to 20")
 
 
     #balance logic to be implementes
