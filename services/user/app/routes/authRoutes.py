@@ -115,6 +115,27 @@ async def update_user_wallet(db: Annotated[Session, Depends(get_db)],wallet: upd
     #     return JSONResponse(status_code=400, content={"error": str(e), "details": error_details})
     return JSONResponse(status_code=200,content={"message":"wallet_updated successfully!"})
 
+@tokenRouter.put("/update/coinwalletid")
+async def update_user_wallet(db: Annotated[Session, Depends(get_db)],wallet: updateWalletId):
+
+
+    # token_data = await getTokenDataFromAuthService(token)
+
+    token_data = wallet.token_data
+    
+    if token_data is None :
+        return JSONResponse(status_code=401,content={"message": "missing Authorization header"})
+    if token_data.flag != "LOGIN":
+        return JSONResponse(status_code=401,content={"message":"Invalid Credentials!"})
+    updated_user = updateUserWalletid(user_id=token_data.id,wallet_id=wallet.wallet_id,db=db)  # Use the ID from the current user
+    if not updated_user:
+            return JSONResponse(status_code=401,content={'message': "Couldn't update wallet id"})
+    # except Exception as e:
+    #     error_details = traceback.format_exc()  # Captures the full stack trace
+    #     return JSONResponse(status_code=400, content={"error": str(e), "details": error_details})
+    return JSONResponse(status_code=200,content={"message":"wallet_updated successfully!"})
+
+
 
 
 # Delete user
