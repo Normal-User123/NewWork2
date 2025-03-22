@@ -177,7 +177,7 @@ def getReferralwalletByUserId(id: int, db: Session):
     return wallet
 
 
-def createTransaction(walletId: str, userId: int, amount: float, db: Session,transactionId: str=None,status:int =1):
+def createTransaction(walletId: str, userId: int, amount: float, db: Session,transactionId: str=None,status:int =1,fromtype: int =0):
     """Create a transaction for Crypto wallet"""
     # Check if a transaction with the same transaction ID already exists
     existingTransaction=None
@@ -197,7 +197,7 @@ def createTransaction(walletId: str, userId: int, amount: float, db: Session,tra
         ammount=round(amount, 2),
         created_at=datetime.now(timezone.utc),
         status=status,  # Assuming 1 for completed
-        from_type=0  # Assuming 0 for crypto
+        from_type=fromtype  # Assuming 0 for crypto, 2 for coin, 1 for referral
     )
     db.add(newTransaction)
     db.commit()
@@ -342,18 +342,8 @@ def InterimToCryptoWallet():
                 if new_balance <= 0:
                     print("Balance cannot be negative. Setting balance to 0. Skipping transfer...")
                     continue
-
-                if cryptoWallet:
-                    print("Corresponding user's crypto wallet found...")
-                    if wallet.balance == 0:
-                        print("Balance is 0, skipping credit transfer...")
-                        continue
-                    if not createTransaction(walletId=cryptoWallet.id, userId=cryptoWallet.user_id, amount=new_balance, db=db, status=1):
-                        raise Exception("Transaction not created")
-
-                    cryptoWallet.balance += new_balance
-                    print(f"Balance: {cryptoWallet.balance} updated")
-                else:
+                
+                if not cryptoWallet:
                     print("Corresponding user's crypto wallet not found, creating one...")
                     cryptoWallet = CryptoWallet(
                         user_id=wallet.user_id,
@@ -361,15 +351,22 @@ def InterimToCryptoWallet():
                         created_at=datetime.now(timezone.utc),
                         updated_at=datetime.now(timezone.utc)
                     )
-                    if not createTransaction(walletId=cryptoWallet.id, userId=cryptoWallet.user_id, amount=new_balance, db=db, status=1):
-                        raise Exception("Transaction not created")
+
+                try:
+                    # Create transaction for the transfer
+                    createTransaction(walletId=cryptoWallet.id, userId=cryptoWallet.user_id, amount=new_balance, db=db, status=1, fromtype=2)
+                    
+                    # Update balance for the crypto wallet
                     cryptoWallet.balance += new_balance
                     db.add(cryptoWallet)
+                    
                     print(f"Balance: {cryptoWallet.balance} updated")
-
-                # Refresh DB after each iteration (optional, if required)
-                db.refresh(cryptoWallet)
+                except Exception as e:
+                    print(f"Error creating transaction for user id {cryptoWallet.user_id}: {str(e)}")
+                    db.rollback()
+                    continue
                 db.commit()
+                db.refresh(cryptoWallet)
 
             db.commit()  # Commit transaction if all operations succeed
             print("Interim wallets have been successfully transferred to crypto wallets.")
