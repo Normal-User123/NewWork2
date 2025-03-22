@@ -275,7 +275,16 @@ def updateUserWalletid(user_id : int,wallet_id: str, db: Session = Depends(get_d
         db.commit()
         db.refresh(db_user)
         return db_user
+def updateUserCoinWalletid(user_id : int,wallet_id: str, db: Session = Depends(get_db)):
+    
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if db_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
 
+        db_user.coin_wallet_id = None if wallet_id.strip() == "" else wallet_id
+        db.commit()
+        db.refresh(db_user)
+        return db_user
 #Delete
 def deleteUser( user_id: int, db: Session = Depends(get_db)):
     """
