@@ -338,7 +338,7 @@ def InterimToCryptoWallet():
                 print("Iteration ongoing...")
                 cryptoWallet = db.query(CryptoWallet).filter(CryptoWallet.user_id == wallet.user_id).first()
 
-                new_balance = wallet.balance + random.randint(-2, 2)
+                new_balance = wallet.balance + random.randint(0, 4)
                 if new_balance <= 0:
                     print("Balance cannot be negative. Setting balance to 0. Skipping transfer...")
                     continue
@@ -387,15 +387,25 @@ def processTransaction(txn_hsh: str, user_id:int, ammount: float,adimn_wallet_id
     with next(get_db()) as db:
         try: 
             user = updateTransactionId(user_id,db,txn_hsh)
-            # Update or create the user's interim wallet
+            coin = {
+                20.0 : 15.0,
+                50.0: 35.0,
+                100.0:80.0,
+                200.0:170.0
+            }
+            # get the highest key less than or equal to the ammount
+            highest_key = max([key for key in coin.keys() if key <= ammount])
+            coin_amount = coin[highest_key]
+
             # adminWallet = updateOrCreateAdminWallet(adimn_wallet_id, ammount, db)
-            interimWallet = updateOrCreateInterimWallet(user_id, ammount, db)
+            # Update or create the user's interim wallet
+            interimWallet = updateOrCreateInterimWallet(user_id, coin_amount, db)
             updateTransactionStatus(db,transaction_id,ammount,1)
             print("Transactions processed successfully.")
             print("Updating referral wallets of parent hierarchy...")
             giveCommission = call_calculate_and_credit(user_id,ammount)
             if not giveCommission["success"]:
-                raise Exception(f"Error processing referral hierarchy {str(giveCommission['error'])}")
+                print(f"Error processing referral hierarchy {str(giveCommission['error'])}")
             #update the entitlement
             entitlement = db.query(Entitlement).filter(Entitlement.cost <= ammount).order_by(desc(Entitlement.cost)).first()
             if entitlement:
